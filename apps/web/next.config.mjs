@@ -15,6 +15,8 @@ jiti.import("./lib/env").catch(console.error);
 
 /** @type {import('next').NextConfig} */
 const config = {
+  // Enable standalone output for optimized Docker builds
+  output: "standalone",
   redirects: () => {
     return [
       {
