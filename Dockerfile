@@ -10,6 +10,9 @@ FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat curl
 RUN npm install -g npm@^11
 
+# Enable Corepack for packageManager support
+RUN corepack enable
+
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
@@ -39,8 +42,10 @@ FROM source AS builder
 WORKDIR /app
 
 # Set build environment variables
+ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV SKIP_ENV_VALIDATION=true
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build all applications
 RUN npx turbo build
