@@ -4,19 +4,18 @@ name: Trigger auto deployment for ai-tambo-cloud
 on:
   # Automatically trigger it when detected changes in repo
   push:
-    branches: 
-      [ main ]
+    branches: [main]
     paths:
-    - '**'
-    - '.github/workflows/ai-tambo-cloud-AutoDeployTrigger-d3c6b5f3-c81c-4025-83dc-3e0149ce8e5b.yml'
+      - "**"
+      - ".github/workflows/ai-tambo-cloud-AutoDeployTrigger-d3c6b5f3-c81c-4025-83dc-3e0149ce8e5b.yml"
 
-  # Allow manual trigger 
-  workflow_dispatch:      
+  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions: 
+    permissions:
       id-token: write #This is required for requesting the OIDC JWT Token
       contents: read #Required when GH token is used to authenticate with private repo
 
@@ -37,7 +36,7 @@ jobs:
           appSourcePath: ${{ github.workspace }}
           _dockerfilePathKey_: _dockerfilePath_
           _targetLabelKey_: _targetLabel_
-          registryUrl: 
+          registryUrl: ghcr.io
           registryUsername: ${{ secrets.AITAMBOCLOUD_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.AITAMBOCLOUD_REGISTRY_PASSWORD }}
           containerAppName: ai-tambo-cloud
@@ -45,5 +44,6 @@ jobs:
           imageToBuild: default/[parameters('containerAppName')]:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
+
 
 
