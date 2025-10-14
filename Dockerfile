@@ -19,7 +19,7 @@ FROM base AS deps
 WORKDIR /app
 
 # Copy package files for dependency resolution
-COPY package*.json turbo.json ./
+COPY package*.json package-lock.json turbo.json ./
 COPY apps/*/package*.json ./apps/*/
 COPY packages/*/package*.json ./packages/*/
 
