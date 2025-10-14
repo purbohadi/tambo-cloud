@@ -7,7 +7,7 @@ on:
     types:
       - completed
   workflow_dispatch:
-  
+
 env:
   DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@${{ secrets.PGHOST }}:${{ secrets.PGPORT }}/${{ secrets.POSTGRES_DB }}
 
