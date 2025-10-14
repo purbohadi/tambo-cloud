@@ -7,6 +7,9 @@ on:
     types:
       - completed
   workflow_dispatch:
+  
+env:
+  DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@${{ secrets.PGHOST }}:${{ secrets.PGPORT }}/${{ secrets.POSTGRES_DB }}
 
 jobs:
   deploy-migrations:
@@ -29,6 +32,6 @@ jobs:
 
       - name: Run database migrations
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npm run db:migrate
         working-directory: packages/db
