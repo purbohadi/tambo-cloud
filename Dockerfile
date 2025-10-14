@@ -47,8 +47,9 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV SKIP_ENV_VALIDATION=true
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build all applications
-RUN npx turbo build
+# Build dependencies first, then applications
+RUN npx turbo build --filter=@tambo-ai-cloud/typescript-config --filter=@tambo-ai-cloud/core --filter=@tambo-ai-cloud/db --filter=@tambo-ai-cloud/backend
+RUN npx turbo build --filter=tambo-ai-landing-page --filter=hydra-api --continue
 
 # Web service stage
 FROM base AS web
