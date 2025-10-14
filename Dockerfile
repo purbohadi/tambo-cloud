@@ -19,12 +19,12 @@ FROM base AS deps
 WORKDIR /app
 
 # Copy package files for dependency resolution
-COPY package*.json package-lock.json turbo.json ./
+COPY package*.json turbo.json ./
 COPY apps/*/package*.json ./apps/*/
 COPY packages/*/package*.json ./packages/*/
 
-# Install all dependencies
-RUN npm ci && npm cache clean --force
+# Install all dependencies (using install instead of ci for better workspace compatibility)
+RUN npm install --prefer-offline --no-audit && npm cache clean --force
 
 # Source stage - copy all source code
 FROM base AS source
