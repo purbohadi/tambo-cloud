@@ -1,6 +1,14 @@
 # Multi-service Docker image for Tambo Cloud
-# Usage:
-#   docker build --target web -t tambo-web .
+# Usage:# Create the missing TypeScript config files that packages depend on
+RUN mkdir -p /app/node_modules/@tambo-ai-cloud/typescript-config && \
+    echo '{"compilerOptions":{"declaration":true,"declarationMap":true,"esModuleInterop":true,"incremental":false,"isolatedModules":true,"lib":["es2023","DOM","DOM.Iterable"],"module":"NodeNext","moduleDetection":"force","moduleResolution":"NodeNext","noUncheckedIndexedAccess":false,"resolveJsonModule":true,"skipLibCheck":true,"strict":false,"target":"ES2022","sourceMap":true}}' > /app/node_modules/@tambo-ai-cloud/typescript-config/base.json && \
+    echo '{"extends":"./base.json","compilerOptions":{"plugins":[{"name":"next"}],"module":"ESNext","moduleResolution":"Bundler","allowJs":true,"jsx":"preserve","noEmit":true,"lib":["ES2023"]}}' > /app/node_modules/@tambo-ai-cloud/typescript-config/nextjs.json
+
+# Build core packages with lenient TypeScript settings
+RUN npx turbo build --filter=@tambo-ai-cloud/core --filter=@tambo-ai-cloud/db --continue || echo "Some core packages failed to build"
+
+# Build the web app
+WORKDIR /app/apps/webdocker build --target web -t tambo-web .
 #   docker build --target api -t tambo-api .
 #   docker build --target all -t tambo-all .
 
@@ -29,7 +37,6 @@ COPY packages/*/package*.json ./packages/*/
 # Install all dependencies and rebuild native modules for the container platform
 RUN npm install --prefer-offline --no-audit && \
     npm rebuild && \
-    npm install @rollup/rollup-linux-x64-musl @rollup/rollup-linux-x64-gnu --no-save --ignore-scripts || true && \
     npm cache clean --force
 
 # Source stage - copy all source code
@@ -51,18 +58,17 @@ ENV SKIP_ENV_VALIDATION=true
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TURBO_TELEMETRY_DISABLED=1
 
-# Create the missing TypeScript config files that packages depend on
-RUN mkdir -p /app/node_modules/@tambo-ai-cloud/typescript-config && \
-    echo '{"compilerOptions":{"declaration":true,"declarationMap":true,"esModuleInterop":true,"incremental":false,"isolatedModules":true,"lib":["es2023","DOM","DOM.Iterable"],"module":"NodeNext","moduleDetection":"force","moduleResolution":"NodeNext","noUncheckedIndexedAccess":false,"resolveJsonModule":true,"skipLibCheck":true,"strict":false,"target":"ES2022","sourceMap":true}}' > /app/node_modules/@tambo-ai-cloud/typescript-config/base.json && \
-    echo '{"extends":"./base.json","compilerOptions":{"plugins":[{"name":"next"}],"module":"ESNext","moduleResolution":"Bundler","allowJs":true,"jsx":"preserve","noEmit":true,"lib":["ES2023"]}}' > /app/node_modules/@tambo-ai-cloud/typescript-config/nextjs.json
+# First, build essential workspace dependencies
+WORKDIR /app
 
 # Build core packages with lenient TypeScript settings
 RUN npx turbo build --filter=@tambo-ai-cloud/core --filter=@tambo-ai-cloud/db --continue || echo "Some core packages failed to build"
 
-# Build the web app
+# Now build the web app
 WORKDIR /app/apps/web
 
 # Use the original tsconfig.json since we now have the typescript-config files
+
 # Build the web app with additional environment variables for build
 ENV SKIP_VALIDATION=true
 RUN npm run build
@@ -167,7 +173,29 @@ RUN npm install -g pm2
 USER nodejs
 
 # Create PM2 ecosystem file
-RUN echo '{"apps":[{"name":"tambo-web","cwd":"/app/web-app/apps/web","script":"server.js","env":{"PORT":"3210","NODE_ENV":"production"}},{"name":"tambo-api","cwd":"/app/api-app","script":"apps/api/dist/apps/api/src/main","env":{"PORT":"3211","NODE_ENV":"production","NODE_OPTIONS":"--experimental-require-module"}}]}' > ecosystem.config.json
+RUN echo '{\
+  "apps": [\
+    {\
+      "name": "tambo-web",\
+      "cwd": "/app/web-app/apps/web",\
+      "script": "server.js",\
+      "env": {\
+        "PORT": "3210",\
+        "NODE_ENV": "production"\
+      }\
+    },\
+    {\
+      "name": "tambo-api",\
+      "cwd": "/app/api-app",\
+      "script": "apps/api/dist/apps/api/src/main",\
+      "env": {\
+        "PORT": "3211",\
+        "NODE_ENV": "production",\
+        "NODE_OPTIONS": "--experimental-require-module"\
+      }\
+    }\
+  ]\
+}' > ecosystem.config.json
 
 # Health check for all services
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
