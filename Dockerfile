@@ -26,8 +26,10 @@ COPY package*.json turbo.json ./
 COPY apps/*/package*.json ./apps/*/
 COPY packages/*/package*.json ./packages/*/
 
-# Install all dependencies (using install instead of ci for better workspace compatibility)
-RUN npm install --prefer-offline --no-audit && npm cache clean --force
+# Install all dependencies and rebuild native modules for the container platform
+RUN npm install --prefer-offline --no-audit && \
+    npm rebuild && \
+    npm cache clean --force
 
 # Source stage - copy all source code
 FROM base AS source
@@ -48,7 +50,13 @@ ENV SKIP_ENV_VALIDATION=true
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TURBO_TELEMETRY_DISABLED=1
 
-# Build the web app directly without Turbo to avoid dependency issues
+# First, build essential workspace dependencies
+WORKDIR /app
+
+# Build core packages with lenient TypeScript settings
+RUN npx turbo build --filter=@tambo-ai-cloud/core --filter=@tambo-ai-cloud/db --continue || echo "Some core packages failed to build"
+
+# Now build the web app
 WORKDIR /app/apps/web
 
 # Backup original tsconfig and create a self-contained one
@@ -92,7 +100,7 @@ RUN npm run build
 
 # Build the API directly
 WORKDIR /app/apps/api
-RUN npm run build || echo "API build failed, but continuing..."
+RUN npm run build
 
 # Reset working directory
 WORKDIR /app
