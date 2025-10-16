@@ -48,11 +48,16 @@ ENV SKIP_ENV_VALIDATION=true
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TURBO_TELEMETRY_DISABLED=1
 
-# Build the web app only (Next.js can handle its own dependencies)
-RUN npx turbo build --filter=tambo-ai-landing-page
+# Build the web app directly without Turbo to avoid dependency issues
+WORKDIR /app/apps/web
+RUN npm run build
 
-# Build the API separately with error handling for TypeScript issues
-RUN npx turbo build --filter=hydra-api || echo "API build failed, but continuing..."
+# Build the API directly
+WORKDIR /app/apps/api
+RUN npm run build || echo "API build failed, but continuing..."
+
+# Reset working directory
+WORKDIR /app
 
 # Web service stage
 FROM base AS web
