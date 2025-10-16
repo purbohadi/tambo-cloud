@@ -79,7 +79,8 @@ RUN mv tsconfig.json tsconfig.json.bak && echo '{\
     "strict": false,\
     "target": "ES2022",\
     "sourceMap": true,\
-    "resolveJsonModule": true\
+    "resolveJsonModule": true,\
+    "baseUrl": "."\
   },\
   "paths": {\
     "@/*": ["./*"]\
