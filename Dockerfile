@@ -50,6 +50,44 @@ ENV TURBO_TELEMETRY_DISABLED=1
 
 # Build the web app directly without Turbo to avoid dependency issues
 WORKDIR /app/apps/web
+
+# Backup original tsconfig and create a self-contained one
+RUN mv tsconfig.json tsconfig.json.bak && echo '{\
+  "$schema": "https://json.schemastore.org/tsconfig",\
+  "compilerOptions": {\
+    "plugins": [{ "name": "next" }],\
+    "module": "ESNext",\
+    "moduleResolution": "Bundler",\
+    "allowJs": true,\
+    "jsx": "preserve",\
+    "noEmit": true,\
+    "lib": ["ES2023"],\
+    "declaration": true,\
+    "declarationMap": true,\
+    "esModuleInterop": true,\
+    "incremental": false,\
+    "isolatedModules": true,\
+    "skipLibCheck": true,\
+    "strict": false,\
+    "target": "ES2022",\
+    "sourceMap": true,\
+    "resolveJsonModule": true\
+  },\
+  "paths": {\
+    "@/*": ["./*"]\
+  },\
+  "include": [\
+    "**/*.ts",\
+    "**/*.tsx",\
+    "next-env.d.ts",\
+    "*.mjs",\
+    ".next/types/**/*.ts",\
+    "types/*.d.ts"\
+  ],\
+  "exclude": ["node_modules", ".next"]\
+}' > tsconfig.json
+
+# Build the web app
 RUN npm run build
 
 # Build the API directly
